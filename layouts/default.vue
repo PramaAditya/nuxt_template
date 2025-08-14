@@ -18,7 +18,7 @@ const user = useLogtoUser();
             <div id="toolbar-target" />
         </header>
         <div class="p-4 overflow-auto">
-            <slot />
+            <NuxtPage />
         </div>
       </main>
     </SidebarProvider>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button"
+
+const user = useLogtoUser();
 </script>
 <template>
     <Teleport to="#page-name-target">
@@ -11,5 +13,5 @@ import { Button } from "@/components/ui/button"
           New
       </Button>
     </Teleport>
-  Hello World!
+  {{user}}
 </template>
