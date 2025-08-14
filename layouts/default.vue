@@ -9,9 +9,17 @@ const user = useLogtoUser();
   <template v-if="user">
     <SidebarProvider>
       <AppSidebar />
-      <main>
-        <SidebarTrigger />
-        <slot />
+      <main class="h-screen flex flex-col w-full">
+        <header class="flex items-center justify-between p-4 border-b shrink-0">
+            <div class="flex items-center gap-4">
+                <SidebarTrigger />
+                <h1 id="page-name-target" class="text-lg font-semibold" />
+            </div>
+            <div id="toolbar-target" />
+        </header>
+        <div class="p-4 overflow-auto">
+            <slot />
+        </div>
       </main>
     </SidebarProvider>
   </template>
