@@ -2,6 +2,8 @@
 import { useLogtoUser } from "#imports";
 import AppSidebar from '@/components/AppSidebar.vue'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { Toaster } from '@/components/ui/sonner'
+import 'vue-sonner/style.css'
 
 const user = useLogtoUser();
 </script>
@@ -22,6 +24,7 @@ const user = useLogtoUser();
         </div>
       </main>
     </SidebarProvider>
+    <Toaster />
   </template>
   <main class="h-screen w-screen flex items-center justify-center" v-else>
     <Button :as-child="true">

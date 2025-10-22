@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ApplicationIcon from "@/components/ApplicationIcon.vue"
-import { Button } from "@/components/ui/button"
+import UserDropdown from "@/components/UserDropdown.vue"
 import {
   Sidebar,
   SidebarContent,
@@ -18,29 +18,29 @@ import {
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "/",
     icon: "lucide:home",
   },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: "lucide:inbox",
-  },
-  {
-    title: "Calendar",
-    url: "#",
-    icon: "lucide:calendar",
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: "lucide:search",
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: "lucide:settings",
-  },
+  // {
+  //   title: "Inbox",
+  //   url: "#",
+  //   icon: "lucide:inbox",
+  // },
+  // {
+  //   title: "Calendar",
+  //   url: "#",
+  //   icon: "lucide:calendar",
+  // },
+  // {
+  //   title: "Search",
+  //   url: "#",
+  //   icon: "lucide:search",
+  // },
+  // {
+  //   title: "Settings",
+  //   url: "#",
+  //   icon: "lucide:settings",
+  // },
 ];
 </script>
 
@@ -67,12 +67,7 @@ const items = [
       </SidebarGroup>
     </SidebarContent>
     <SidebarFooter>
-      <Button as-child>
-        <a href="/sign-out">
-          <Icon name="lucide:log-out" class="w-4 h-4" />
-          <span class="group-data-[state=collapsed]:hidden">Sign Out</span>
-        </a>
-      </Button>
+      <UserDropdown />
     </SidebarFooter>
   </Sidebar>
 </template>
