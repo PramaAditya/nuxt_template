@@ -12,5 +12,5 @@ const renderedContent = computed(() => {
 </script>
 
 <template>
-  <div class="prose" v-html="renderedContent"></div>
+  <div class="prose-chat" v-html="renderedContent"></div>
 </template>
