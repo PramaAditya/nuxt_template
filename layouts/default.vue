@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useLogtoUser } from "#imports";
+import LandingPage from '@/components/landing/Page.vue';
 import AppSidebar from '@/components/AppSidebar.vue'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
@@ -26,12 +27,5 @@ const user = useLogtoUser();
     </SidebarProvider>
     <Toaster />
   </template>
-  <main class="h-screen w-screen flex items-center justify-center" v-else>
-    <Button :as-child="true">
-      <a href="/sign-in">
-        <Icon name="streamline-logos:google-logo-solid" class="w-4 h-4 mr-2" />
-        Sign in using Google
-      </a>
-    </Button>
-  </main>
+  <LandingPage v-else />
 </template>
