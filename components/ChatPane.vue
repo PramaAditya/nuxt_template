@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MarkdownRenderer from './MarkdownRenderer.vue';
 import TypingIndicator from './TypingIndicator.vue';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ChatMessage extends UIMessage {
   metadata?: {
@@ -62,12 +63,6 @@ watch(() => chat.messages, () => {
 
 <template>
   <div class="flex flex-col h-full">
-    <div class="p-4 border-b">
-      <select v-model="selectedModel" class="w-full p-2 border rounded">
-        <option value="free">Free Model</option>
-        <option value="premium">Premium Model</option>
-      </select>
-    </div>
     <div ref="messageContainer" class="flex-1 p-4 overflow-y-auto">
       <div v-for="m in chat.messages" :key="m.id" class="flex mb-4" :class="{ 'justify-end': m.role === 'user' }">
         <div class="p-2 rounded-lg" :class="{ 'bg-blue-100': m.role === 'user', 'bg-transparent': m.role !== 'user' }">
@@ -99,6 +94,35 @@ watch(() => chat.messages, () => {
     <div class="p-4 border-t">
       <form @submit.prevent="handleSubmit">
         <div class="flex gap-4">
+          <Popover>
+            <PopoverTrigger as-child>
+              <Button variant="outline">{{ selectedModel === 'free' ? 'Free' : 'Premium' }}</Button>
+            </PopoverTrigger>
+            <PopoverContent class="w-80">
+              <div class="grid gap-4">
+                <div class="space-y-2">
+                  <h4 class="font-medium leading-none">Model Selector</h4>
+                  <p class="text-sm text-muted-foreground">
+                    Choose a model to chat with.
+                  </p>
+                </div>
+                <div class="grid gap-2">
+                  <Button variant="ghost" @click="selectedModel = 'free'" class="w-full justify-start">
+                    <div class="text-left">
+                      <p class="font-semibold">Free</p>
+                      <p class="text-xs text-muted-foreground">Fast and efficient for everyday tasks.</p>
+                    </div>
+                  </Button>
+                  <Button variant="ghost" @click="selectedModel = 'premium'" class="w-full justify-start">
+                    <div class="text-left">
+                      <p class="font-semibold">Premium</p>
+                      <p class="text-xs text-muted-foreground">Smarter and more capable for complex queries.</p>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Input v-model="input" placeholder="Type your message..." />
           <Button type="submit">Send</Button>
         </div>
