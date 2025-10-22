@@ -2,9 +2,16 @@ import { PrismaClient } from '@prisma/client';
 // @ts-ignore #logto import error
 import { logtoEventHandler } from '#logto';
 import { google } from '@ai-sdk/google';
-import { streamText, UIMessage, convertToModelMessages } from 'ai';
+import { streamText, UIMessage, convertToModelMessages, tool, stepCountIs } from 'ai';
 import { canUserChat } from '~/server/utils/chat-validation';
+import { calculatorTool } from '~/server/tools/calculator';
+import { renderTemplate } from '~/server/utils/templating';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { z } from 'zod';
+import { create, all } from 'mathjs';
 
+const math = create(all);
 const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
@@ -54,21 +61,23 @@ export default defineEventHandler(async (event) => {
     ? config.public.ai.premiumModel
     : config.public.ai.freeModel;
 
+  const systemPromptTemplate = readFileSync(join(process.cwd(), 'server/chat-modes/default.md'), 'utf-8');
+  const systemPrompt = renderTemplate(systemPromptTemplate, {
+    datetime: new Date().toISOString(),
+  });
+
   const result = await streamText({
     model: google(modelName),
+    system: systemPrompt,
     messages: convertToModelMessages(messages),
+    tools: {
+      calculator: calculatorTool,
+    },
+    stopWhen: stepCountIs(5),
     onFinish: ({ usage }) => {
       console.log('Token usage:', usage);
     },
   });
 
-  return result.toUIMessageStreamResponse({
-    messageMetadata: ({ part }) => {
-      if (part.type === 'finish') {
-        return {
-          usage: part.totalUsage,
-        };
-      }
-    },
-  });
+  return result.toUIMessageStreamResponse();
 });
