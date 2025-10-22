@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 // @ts-ignore #logto import error
 import { logtoEventHandler } from '#logto';
 import { google } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { streamText, UIMessage, convertToModelMessages } from 'ai';
 import { canUserChat } from '~/server/utils/chat-validation';
 
 const prisma = new PrismaClient();
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { messages, model: requestedModel } = await readBody(event);
+  const { messages, model: requestedModel }: { messages: UIMessage[], model: 'free' | 'premium' } = await readBody(event);
 
   if (!canUserChat(user, requestedModel)) {
     throw createError({
@@ -56,8 +56,8 @@ export default defineEventHandler(async (event) => {
 
   const result = await streamText({
     model: google(modelName),
-    messages,
+    messages: convertToModelMessages(messages),
   });
 
-  return result.toTextStreamResponse();
+  return result.toUIMessageStreamResponse();
 });
