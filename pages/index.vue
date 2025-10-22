@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button"
+import { usePageFeatures } from '~/composables/usePageFeatures';
 
 const user = useLogtoUser();
+usePageFeatures({
+  chat: false,
+});
 </script>
 <template>
     <Teleport to="#page-name-target">

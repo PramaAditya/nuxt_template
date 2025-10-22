@@ -35,6 +35,12 @@ export default defineNuxtConfig({
       appSecret: process.env.NUXT_LOGTO_APP_SECRET,
       cookieEncryptionKey: process.env.NUXT_LOGTO_COOKIE_ENCRYPTION_KEY,
     },
+    public: {
+      ai: {
+        freeModel: process.env.NUXT_PUBLIC_AI_FREE_MODEL,
+        premiumModel: process.env.NUXT_PUBLIC_AI_PREMIUM_MODEL,
+      },
+    },
   },
   logto: {
     pathnames: {
