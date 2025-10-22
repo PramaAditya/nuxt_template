@@ -57,7 +57,18 @@ export default defineEventHandler(async (event) => {
   const result = await streamText({
     model: google(modelName),
     messages: convertToModelMessages(messages),
+    onFinish: ({ usage }) => {
+      console.log('Token usage:', usage);
+    },
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    messageMetadata: ({ part }) => {
+      if (part.type === 'finish') {
+        return {
+          usage: part.totalUsage,
+        };
+      }
+    },
+  });
 });

@@ -1,13 +1,28 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import { Chat } from '@ai-sdk/vue';
-import { DefaultChatTransport } from 'ai';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import MarkdownRenderer from './MarkdownRenderer.vue';
+import TypingIndicator from './TypingIndicator.vue';
+
+interface ChatMessage extends UIMessage {
+  metadata?: {
+    usage?: {
+      inputTokens?: number;
+      outputTokens?: number;
+      totalTokens?: number;
+      reasoningTokens?: number;
+      cachedInputTokens?: number;
+    };
+  };
+}
 
 const { $emitter } = useNuxtApp();
 const input = ref('');
 const selectedModel = ref('premium');
+const messageContainer = ref<HTMLElement | null>(null);
 
 const chat = new Chat({
   transport: new DefaultChatTransport({
@@ -35,6 +50,14 @@ onMounted(() => {
 onUnmounted(() => {
   $emitter.off('send-message-to-chat', handleIncomingMessage);
 });
+
+watch(() => chat.messages, () => {
+  nextTick(() => {
+    if (messageContainer.value) {
+      messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+    }
+  });
+}, { deep: true });
 </script>
 
 <template>
@@ -45,23 +68,33 @@ onUnmounted(() => {
         <option value="premium">Premium Model</option>
       </select>
     </div>
-    <div class="flex-1 p-4 overflow-y-auto">
-      <div v-for="m in chat.messages" :key="m.id" class="mb-4">
-        <div v-if="m.role === 'user'" class="text-right">
-          <span class="p-2 bg-blue-100 rounded-lg">
-            <template v-for="part in m.parts" :key="part.type">
-              <span v-if="part.type === 'text'">{{ part.text }}</span>
-            </template>
-          </span>
-        </div>
-        <div v-else>
-          <span class="p-2 bg-gray-100 rounded-lg">
-            <template v-for="part in m.parts" :key="part.type">
-              <span v-if="part.type === 'text'">{{ part.text }}</span>
-            </template>
-          </span>
+    <div ref="messageContainer" class="flex-1 p-4 overflow-y-auto">
+      <div v-for="m in chat.messages" :key="m.id" class="flex mb-4" :class="{ 'justify-end': m.role === 'user' }">
+        <div class="p-2 rounded-lg" :class="{ 'bg-blue-100': m.role === 'user', 'bg-transparent': m.role !== 'user' }">
+          <template v-for="part in m.parts" :key="part.type">
+            <MarkdownRenderer v-if="part.type === 'text'" :content="part.text" />
+          </template>
+          <div v-if="m.role !== 'user' && (m as ChatMessage).metadata?.usage" class="flex items-center gap-4 text-xs text-gray-500 mt-2">
+            <div class="flex items-center gap-1">
+              <Icon name="lucide:arrow-down" class="w-3 h-3" />
+              <span>{{ (m as ChatMessage).metadata?.usage?.inputTokens }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <Icon name="lucide:arrow-up" class="w-3 h-3" />
+              <span>{{ (m as ChatMessage).metadata?.usage?.outputTokens }}</span>
+            </div>
+            <div v-if="(m as ChatMessage).metadata?.usage?.reasoningTokens" class="flex items-center gap-1">
+              <Icon name="lucide:brain-circuit" class="w-3 h-3" />
+              <span>{{ (m as ChatMessage).metadata?.usage?.reasoningTokens }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <Icon name="lucide:arrow-left-right" class="w-3 h-3" />
+              <span>{{ (m as ChatMessage).metadata?.usage?.totalTokens }}</span>
+            </div>
+          </div>
         </div>
       </div>
+      <TypingIndicator v-if="chat.status === 'submitted'" />
     </div>
     <div class="p-4 border-t">
       <form @submit.prevent="handleSubmit">

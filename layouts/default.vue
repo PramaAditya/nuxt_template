@@ -41,7 +41,7 @@ const pageFeatures = usePageFeatures({ chat: false })
         </ResizablePanel>
         <template v-if="isChatPaneOpen">
           <ResizableHandle />
-          <ResizablePanel :default-size="50">
+          <ResizablePanel :default-size="50" class="h-screen">
             <ChatPane />
           </ResizablePanel>
         </template>
