@@ -12,7 +12,7 @@ export const calculatorTool = tool({
   execute: async ({ expression }: { expression: string }) => {
     try {
       const result = math.evaluate(expression);
-      console.log(`Calculator result: ${result}`);
+      console.debug(`[server/tools/calculator.ts] Calculator result: ${result}`);
       return { result };
     } catch (error) {
       console.error(`Calculator error: ${error}`);
