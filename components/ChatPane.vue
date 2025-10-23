@@ -56,11 +56,19 @@ const handleRetry = (id: string) => {
   chat.regenerate({ messageId: id });
 };
 
+const handleDelete = (id: string) => {
+  const messageIndex = chat.messages.findIndex((m) => m.id === id);
+  if (messageIndex === -1) return;
+
+  chat.messages.splice(messageIndex);
+};
+
 onMounted(() => {
   $emitter.on("send-message-to-chat", handleIncomingMessage);
   $emitter.on("message:copy", handleCopy);
   $emitter.on("message:submit-edit", handleEdit);
   $emitter.on("message:retry", handleRetry);
+  $emitter.on("message:delete", handleDelete);
 });
 
 onUnmounted(() => {
@@ -68,6 +76,7 @@ onUnmounted(() => {
   $emitter.off("message:copy", handleCopy);
   $emitter.off("message:submit-edit", handleEdit);
   $emitter.off("message:retry", handleRetry);
+  $emitter.off("message:delete", handleDelete);
 });
 
 watch(

@@ -3,6 +3,17 @@ import { ref } from "vue";
 import type { UIMessage } from "ai";
 import MarkdownRenderer from "../MarkdownRenderer.vue";
 import Tool from "./Tool.vue";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const props = defineProps<{
   message: UIMessage;
@@ -43,6 +54,10 @@ const onSubmitEdit = () => {
 
 const onRetry = () => {
   $emitter.emit("message:retry", props.message.id);
+};
+
+const onDelete = () => {
+  $emitter.emit("message:delete", props.message.id);
 };
 </script>
 
@@ -109,6 +124,28 @@ const onRetry = () => {
         class="w-4 h-4 cursor-pointer p-2"
         @click="onRetry"
       />
+      <AlertDialog>
+        <AlertDialogTrigger>
+          <Icon
+            v-if="message.role === 'user'"
+            name="lucide:trash"
+            class="w-4 h-4 cursor-pointer p-2"
+          />
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              message and all subsequent messages.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction @click="onDelete">Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   </div>
 </template>
