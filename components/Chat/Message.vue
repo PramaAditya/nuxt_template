@@ -1,17 +1,55 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import type { UIMessage } from "ai";
 import MarkdownRenderer from "../MarkdownRenderer.vue";
 import Tool from "./Tool.vue";
 
-defineProps<{
+const props = defineProps<{
   message: UIMessage;
 }>();
+
+const { $emitter } = useNuxtApp();
+
+const isEditing = ref(false);
+const editedText = ref("");
+
+const onCopy = () => {
+  const text = props.message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+  $emitter.emit("message:copy", text);
+};
+
+const onEdit = () => {
+  isEditing.value = true;
+  editedText.value = props.message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+};
+
+const onCancelEdit = () => {
+  isEditing.value = false;
+};
+
+const onSubmitEdit = () => {
+  $emitter.emit("message:submit-edit", {
+    id: props.message.id,
+    content: editedText.value,
+  });
+  isEditing.value = false;
+};
+
+const onRetry = () => {
+  $emitter.emit("message:retry", props.message.id);
+};
 </script>
 
 <template>
   <div
-    class="flex mb-4"
-    :class="{ 'justify-end': message.role === 'user' }"
+    class="flex flex-col gap-2 mb-4 group"
+    :class="{ 'items-end': message.role === 'user' }"
   >
     <div
       class="p-2 rounded-lg"
@@ -20,13 +58,57 @@ defineProps<{
         'bg-transparent': message.role !== 'user',
       }"
     >
-      <template v-for="(part, index) in message.parts" :key="index">
-        <MarkdownRenderer
-          v-if="part.type === 'text'"
-          :content="part.text"
-        />
-        <Tool v-if="part.type.startsWith('tool-')" :part="part" />
+      <template v-if="!isEditing">
+        <template v-for="(part, index) in message.parts" :key="index">
+          <MarkdownRenderer
+            v-if="part.type === 'text'"
+            :content="part.text"
+          />
+          <Tool v-if="part.type.startsWith('tool-')" :part="part" />
+        </template>
       </template>
+      <template v-else>
+        <textarea
+          v-model="editedText"
+          class="w-full p-2 rounded bg-white"
+          @keydown.ctrl.enter="onSubmitEdit"
+        ></textarea>
+        <div class="flex justify-end gap-2 mt-0">
+          <span class="cursor-pointer text-xs p-1 gap-1 flex items-center hover:bg-accent/10" @click="onCancelEdit">
+            Cancel
+          </span>
+          <span class="cursor-pointer text-xs p-1 gap-1 flex items-center hover:bg-accent/10" @click="onSubmitEdit">
+            Send Edit
+            <Icon
+              name="lucide:send"
+              class="w-4 h-4 cursor-pointer"
+              
+            />
+          </span>
+        </div>
+      </template>
+    </div>
+    <div
+      v-if="!isEditing"
+      class="flex items-center gap-3 max-h-0 overflow-hidden px-2 opacity-0 group-hover:opacity-80 hover:opacity-100 group-hover:max-h-100 transition-all ml-2"
+    >
+      <Icon
+        name="lucide:copy"
+        class="w-4 h-4 cursor-pointer p-2"
+        @click="onCopy"
+      />
+      <Icon
+        v-if="message.role === 'user'"
+        name="lucide:pencil"
+        class="w-4 h-4 cursor-pointer p-2"
+        @click="onEdit"
+      />
+      <Icon
+        v-if="message.role !== 'user'"
+        name="lucide:refresh-cw"
+        class="w-4 h-4 cursor-pointer p-2"
+        @click="onRetry"
+      />
     </div>
   </div>
 </template>

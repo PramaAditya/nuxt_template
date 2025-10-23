@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, nextTick } from "vue";
 import { Chat } from "@ai-sdk/vue";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import ModelSelector from "./Chat/ModelSelector.vue";
 import MessageList from "./Chat/MessageList.vue";
+import { toast } from "vue-sonner";
 
 const { $emitter } = useNuxtApp();
 const input = ref("");
@@ -35,18 +36,41 @@ function handleIncomingMessage(message: string) {
   chat.sendMessage({ text: message });
 }
 
+const handleCopy = (text: string) => {
+  navigator.clipboard.writeText(text);
+  toast.success("Copied to clipboard");
+};
+
+function handleEdit({ id, content }: { id: string; content: string }) {
+  const messageIndex = chat.messages.findIndex((m) => m.id === id);
+  if (messageIndex === -1) return;
+
+  chat.messages.splice(messageIndex);
+  chat.sendMessage({ text: content });
+}
+
+const handleRetry = (id: string) => {
+  chat.regenerate({ messageId: id });
+};
+
 onMounted(() => {
   $emitter.on("send-message-to-chat", handleIncomingMessage);
+  $emitter.on("message:copy", handleCopy);
+  $emitter.on("message:submit-edit", handleEdit);
+  $emitter.on("message:retry", handleRetry);
 });
 
 onUnmounted(() => {
   $emitter.off("send-message-to-chat", handleIncomingMessage);
+  $emitter.off("message:copy", handleCopy);
+  $emitter.off("message:submit-edit", handleEdit);
+  $emitter.off("message:retry", handleRetry);
 });
 
 watch(
   () => chat.messages,
   () => {
-    console.log("Messages updated:", JSON.stringify(chat.messages, null, 2));
+    // console.log("Messages updated:", JSON.stringify(chat.messages, null, 2));
     nextTick(() => {
       if (messageContainer.value) {
         messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
