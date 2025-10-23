@@ -17,10 +17,10 @@ const textarea = ref<HTMLTextAreaElement | null>(null);
 const chat = new Chat({
   transport: new DefaultChatTransport({
     api: "/api/chat",
-    body: {
+    body: () => ({
       model: selectedModel.value,
       mode: selectedMode.value,
-    },
+    }),
   }),
 });
 

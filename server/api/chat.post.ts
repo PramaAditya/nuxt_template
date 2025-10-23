@@ -8,6 +8,7 @@ import { renderTemplate } from '~/server/utils/templating';
 import { getChatMode } from '~/server/ai-chat/modes';
 import { z } from 'zod';
 import { create, all } from 'mathjs';
+import { pathToFileURL } from 'url';
 
 const math = create(all);
 const prisma = new PrismaClient();
@@ -72,7 +73,8 @@ export default defineEventHandler(async (event) => {
     datetime: new Date().toISOString(),
   });
 
-  const { tools } = await import(chatMode.toolsPath);
+  const toolsURL = pathToFileURL(chatMode.toolsPath).href;
+  const { tools } = await import(toolsURL);
 
   const result = await streamText({
     model: google(modelName),
