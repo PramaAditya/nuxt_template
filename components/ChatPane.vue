@@ -3,12 +3,14 @@ import { onMounted, onUnmounted, ref, watch, nextTick } from "vue";
 import { Chat } from "@ai-sdk/vue";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import ModelSelector from "./Chat/ModelSelector.vue";
+import ModeSelector from "./Chat/ModeSelector.vue";
 import MessageList from "./Chat/MessageList.vue";
 import { toast } from "vue-sonner";
 
 const { $emitter } = useNuxtApp();
 const input = ref("");
 const selectedModel = ref("premium");
+const selectedMode = ref("default");
 const messageContainer = ref<HTMLElement | null>(null);
 const textarea = ref<HTMLTextAreaElement | null>(null);
 
@@ -17,6 +19,7 @@ const chat = new Chat({
     api: "/api/chat",
     body: {
       model: selectedModel.value,
+      mode: selectedMode.value,
     },
   }),
 });
@@ -107,6 +110,8 @@ watch(input, () => {
       />
       <div class="flex gap-4 px-3 items-center mb-2">
         <ModelSelector v-model="selectedModel" />
+
+        <ModeSelector v-model="selectedMode" />
 
         <button type="submit" class="ml-auto flex items-center justify-center p-2 rounded-full hover:bg-gray-200/50 transition cursor-pointer">
           <Icon name="lucide:send" class="w-6 h-6" />

@@ -4,10 +4,8 @@ import { logtoEventHandler } from '#logto';
 import { google } from '@ai-sdk/google';
 import { streamText, UIMessage, convertToModelMessages, tool, stepCountIs } from 'ai';
 import { canUserChat } from '~/server/utils/chat-validation';
-import { tools } from '~/server/tools';
 import { renderTemplate } from '~/server/utils/templating';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { getChatMode } from '~/server/ai-chat/modes';
 import { z } from 'zod';
 import { create, all } from 'mathjs';
 
@@ -48,7 +46,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { messages, model: requestedModel }: { messages: UIMessage[], model: 'free' | 'premium' } = await readBody(event);
+  const { messages, model: requestedModel, mode = 'default' }: { messages: UIMessage[]; model: 'free' | 'premium'; mode?: string } = await readBody(event);
 
   if (!canUserChat(user, requestedModel)) {
     throw createError({
@@ -61,8 +59,16 @@ export default defineEventHandler(async (event) => {
     ? config.public.ai.premiumModel
     : config.public.ai.freeModel;
 
-  const systemPromptTemplate = readFileSync(join(process.cwd(), 'server/chat-modes/default.md'), 'utf-8');
-  const systemPrompt = renderTemplate(systemPromptTemplate, {
+  const chatMode = getChatMode(mode);
+
+  if (!chatMode) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Bad Request: Invalid chat mode "${mode}"`,
+    });
+  }
+
+  const systemPrompt = renderTemplate(chatMode.systemPrompt, {
     datetime: new Date().toISOString(),
   });
 
@@ -70,7 +76,7 @@ export default defineEventHandler(async (event) => {
     model: google(modelName),
     system: systemPrompt,
     messages: convertToModelMessages(messages),
-    tools,
+    tools: chatMode.tools,
     stopWhen: stepCountIs(5),
     onFinish: ({ usage }) => {
       console.debug('[server/api/chat.post.ts] Token usage:', usage);
