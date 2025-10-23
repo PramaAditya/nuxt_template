@@ -4,7 +4,7 @@ import { join } from 'path';
 interface ChatMode {
   id: string;
   systemPrompt: string;
-  tools: Record<string, any>;
+  toolsPath: string;
 }
 
 const modesDir = join(process.cwd(), 'server/ai-chat/modes');
@@ -21,12 +21,11 @@ for (const mode of modeDirs) {
 
   try {
     const systemPrompt = readFileSync(promptPath, 'utf-8');
-    const { tools } = await import(toolsPath);
 
     chatModes[mode] = {
       id: mode,
       systemPrompt,
-      tools,
+      toolsPath,
     };
   } catch (error) {
     console.warn(`Could not load chat mode "${mode}":`, error);

@@ -72,11 +72,13 @@ export default defineEventHandler(async (event) => {
     datetime: new Date().toISOString(),
   });
 
+  const { tools } = await import(chatMode.toolsPath);
+
   const result = await streamText({
     model: google(modelName),
     system: systemPrompt,
     messages: convertToModelMessages(messages),
-    tools: chatMode.tools,
+    tools,
     stopWhen: stepCountIs(5),
     onFinish: ({ usage }) => {
       console.debug('[server/api/chat.post.ts] Token usage:', usage);

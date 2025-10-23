@@ -90,7 +90,7 @@ const onRetry = () => {
     </div>
     <div
       v-if="!isEditing"
-      class="flex items-center gap-3 max-h-0 overflow-hidden px-2 opacity-0 group-hover:opacity-80 hover:opacity-100 group-hover:max-h-100 transition-all ml-2"
+      class="flex items-center gap-3 px-2 opacity-0 group-hover:opacity-80 hover:opacity-100 transition-all ml-2"
     >
       <Icon
         name="lucide:copy"
