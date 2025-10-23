@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
     tools,
     stopWhen: stepCountIs(5),
     onFinish: ({ usage }) => {
-      console.log('Token usage:', usage);
+      console.debug('[chat.post.ts] Token usage:', usage);
     },
   });
 
