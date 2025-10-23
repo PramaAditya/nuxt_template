@@ -8,18 +8,6 @@ import TypingIndicator from "./TypingIndicator.vue";
 
 import ToolOutput from "./ToolOutput.vue";
 
-interface ChatMessage extends UIMessage {
-  metadata?: {
-    usage?: {
-      inputTokens?: number;
-      outputTokens?: number;
-      totalTokens?: number;
-      reasoningTokens?: number;
-      cachedInputTokens?: number;
-    };
-  };
-}
-
 const { $emitter } = useNuxtApp();
 const input = ref("");
 const selectedModel = ref("premium");
@@ -135,39 +123,11 @@ watch(input, () => {
               </template>
             </ToolOutput>
           </template>
-          <div
-            v-if="m.role !== 'user' && (m as ChatMessage).metadata?.usage"
-            class="flex items-center gap-4 text-xs text-gray-500 mt-2"
-          >
-            <div class="flex items-center gap-1">
-              <Icon name="lucide:arrow-down" class="w-3 h-3" />
-              <span>{{ (m as ChatMessage).metadata?.usage?.inputTokens }}</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <Icon name="lucide:arrow-up" class="w-3 h-3" />
-              <span>{{
-                (m as ChatMessage).metadata?.usage?.outputTokens
-              }}</span>
-            </div>
-            <div
-              v-if="(m as ChatMessage).metadata?.usage?.reasoningTokens"
-              class="flex items-center gap-1"
-            >
-              <Icon name="lucide:brain-circuit" class="w-3 h-3" />
-              <span>{{
-                (m as ChatMessage).metadata?.usage?.reasoningTokens
-              }}</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <Icon name="lucide:arrow-left-right" class="w-3 h-3" />
-              <span>{{ (m as ChatMessage).metadata?.usage?.totalTokens }}</span>
-            </div>
-          </div>
         </div>
       </div>
       <TypingIndicator v-if="chat.status === 'submitted'" />
     </div>
-    <form @submit.prevent="handleSubmit" id="messageInput" class="border my-4 mx-4 rounded-lg bg-white/50 backdrop-blur-sm">
+    <form @submit.prevent="handleSubmit" id="messageInput" class="border mb-4 mx-4 rounded-lg bg-white/50 backdrop-blur-sm">
       <textarea
         ref="textarea"
         v-model="input"
