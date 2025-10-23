@@ -92,13 +92,25 @@ watch(input, () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <aside class="flex flex-col h-full">
+    <header
+      class="flex items-center justify-between p-4 border-b shrink-0 h-16"
+    >
+      <div class="flex items-center gap-4">
+        <h1 class="text-lg font-semibold" >Chat</h1>
+      </div>
+      
+    </header>
     <MessageList
       ref="messageContainer"
       :messages="chat.messages"
       :status="chat.status"
     />
-    <form @submit.prevent="handleSubmit" id="messageInput" class="border mb-4 mx-4 rounded-lg bg-white/50 backdrop-blur-sm">
+    <form
+      @submit.prevent="handleSubmit"
+      id="messageInput"
+      class="border mb-4 mx-4 rounded-lg bg-white/50 backdrop-blur-sm"
+    >
       <textarea
         ref="textarea"
         v-model="input"
@@ -113,10 +125,13 @@ watch(input, () => {
 
         <ModeSelector v-model="selectedMode" />
 
-        <button type="submit" class="ml-auto flex items-center justify-center p-2 rounded-full hover:bg-gray-200/50 transition cursor-pointer">
+        <button
+          type="submit"
+          class="ml-auto flex items-center justify-center p-2 rounded-full hover:bg-gray-200/50 transition cursor-pointer"
+        >
           <Icon name="lucide:send" class="w-6 h-6" />
         </button>
       </div>
     </form>
-  </div>
+  </aside>
 </template>

@@ -22,7 +22,7 @@ const pageFeatures = usePageFeatures({ chat: false })
       <ResizablePanelGroup direction="horizontal" class="w-full">
         <ResizablePanel :default-size="50">
           <main class="h-screen flex flex-col w-full">
-            <header class="flex items-center justify-between p-4 border-b shrink-0">
+            <header class="flex items-center justify-between p-4 border-b shrink-0 h-16">
               <div class="flex items-center gap-4">
                 <SidebarTrigger />
                 <h1 id="page-name-target" class="text-lg font-semibold" />
