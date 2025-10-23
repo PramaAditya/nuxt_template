@@ -4,7 +4,7 @@ import { logtoEventHandler } from '#logto';
 import { google } from '@ai-sdk/google';
 import { streamText, UIMessage, convertToModelMessages, tool, stepCountIs } from 'ai';
 import { canUserChat } from '~/server/utils/chat-validation';
-import { calculatorTool } from '~/server/tools/calculator';
+import { tools } from '~/server/tools';
 import { renderTemplate } from '~/server/utils/templating';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -70,9 +70,7 @@ export default defineEventHandler(async (event) => {
     model: google(modelName),
     system: systemPrompt,
     messages: convertToModelMessages(messages),
-    tools: {
-      calculator: calculatorTool,
-    },
+    tools,
     stopWhen: stepCountIs(5),
     onFinish: ({ usage }) => {
       console.log('Token usage:', usage);
