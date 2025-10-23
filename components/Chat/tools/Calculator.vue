@@ -8,19 +8,15 @@ defineProps<{
 </script>
 
 <template>
-  <div v-if="part.type === 'tool-calculator'">
-    <div v-if="part.input" class="pl-6 mt-2">
-      <p class="text-xs text-gray-500">EXPRESSION</p>
-      <code
-        class="block p-2 mt-1 text-sm bg-gray-200/50 rounded-md"
-        >{{
-          part.input.expression
-        }}</code
-      >
+  <div v-if="part.type === 'tool-calculator'" class="flex gap-2 items-center">
+    <div v-if="part.input" class="">
+      <code class="block p-2 mt-1 text-sm bg-gray-200/50 rounded-md">{{
+        part.input.expression
+      }}</code>
     </div>
+    <Icon name="lucide:equal"/>
     <template v-if="part.state === 'output-available'">
-      <div class="pl-6 mt-2">
-        <p class="text-xs text-gray-500">RESULT</p>
+      <div class="">
         <code
           v-if="'result' in part.output"
           class="block p-2 mt-1 text-sm font-bold text-gray-800 bg-green-200/50 rounded-md"
@@ -34,9 +30,11 @@ defineProps<{
       </div>
     </template>
     <template v-else-if="part.state === 'input-available'">
-      <div class="pl-6 mt-2">
-        <p class="text-xs text-gray-500">RESULT</p>
-        <p class="mt-1 text-sm text-gray-500">Calculating...</p>
+      <div class="">
+        <code
+          class="block p-2 mt-1 text-sm font-bold text-gray-800 bg-gray-200/50 rounded-md"
+          >Calculating...</code
+        >
       </div>
     </template>
   </div>

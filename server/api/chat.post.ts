@@ -49,6 +49,15 @@ export default defineEventHandler(async (event) => {
 
   const { messages, model: requestedModel, mode = 'default' }: { messages: UIMessage[]; model: 'free' | 'premium'; mode?: string } = await readBody(event);
 
+  console.debug(
+    '[server/api/chat.post.ts] chat request:',
+    {
+      mode,
+      model: requestedModel,
+      userText: messages.at(-1)?.parts,
+    }
+  );
+
   if (!canUserChat(user, requestedModel)) {
     throw createError({
       statusCode: 403,

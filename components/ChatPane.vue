@@ -9,7 +9,7 @@ import { toast } from "vue-sonner";
 
 const { $emitter } = useNuxtApp();
 const input = ref("");
-const selectedModel = ref("premium");
+const selectedModel = ref("free");
 const selectedMode = ref("default");
 const messageContainer = ref<HTMLElement | null>(null);
 const textarea = ref<HTMLTextAreaElement | null>(null);
