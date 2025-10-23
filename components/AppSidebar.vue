@@ -26,6 +26,11 @@ const items = [
     url: "/chat",
     icon: "lucide:message-circle",
   },
+  {
+    title: "Chat 2",
+    url: "/chat-2",
+    icon: "lucide:message-square",
+  },
   // {
   //   title: "Calendar",
   //   url: "#",
@@ -56,10 +61,10 @@ const items = [
           <SidebarMenu>
               <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton asChild>
-                    <a :href="item.url">
+                    <NuxtLink  :href="item.url">
                       <Icon :name="item.icon" class="w-4 h-4" />
                       <span class="group-data-[state=collapsed]:hidden">{{item.title}}</span>
-                    </a>
+                    </NuxtLink >
                 </SidebarMenuButton>
               </SidebarMenuItem>
           </SidebarMenu>
