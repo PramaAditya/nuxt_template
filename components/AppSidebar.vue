@@ -21,11 +21,11 @@ const items = [
     url: "/",
     icon: "lucide:home",
   },
-  // {
-  //   title: "Inbox",
-  //   url: "#",
-  //   icon: "lucide:inbox",
-  // },
+  {
+    title: "Chat",
+    url: "/chat",
+    icon: "lucide:message-circle",
+  },
   // {
   //   title: "Calendar",
   //   url: "#",
