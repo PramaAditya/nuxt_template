@@ -12,12 +12,13 @@ To create a system where:
 5.  New chats receive a provisional, timestamp-based title that is later updated by a lightweight AI model.
 6.  From the dialog, a user can load a past chat or navigate to its original page.
 7.  Users can navigate between different conversation branches using a pagination-style control (`< 1/3 >`).
+8.  Users can delete a message and all of its subsequent messages in a branch.
 
 ---
 
 ## 1. Step 1: Database Schema
 
-The Prisma schema will be updated with more descriptive model names and all necessary fields.
+The Prisma schema will be updated to include a soft-delete flag on messages.
 
 ```prisma
 // In your prisma/schema.prisma
@@ -49,6 +50,9 @@ model ChatMessage {
   role       String    // 'user' or 'assistant'
   content    Json
   createdAt  DateTime  @default(now())
+
+  // New field for soft deletion
+  isDeleted  Boolean   @default(false)
 }
 ```
 
@@ -56,109 +60,52 @@ model ChatMessage {
 
 ## 2. Step 2: Backend API Endpoints & Logic
 
-### Data Flow Diagrams
+### New `DELETE /api/message` Endpoint
+This endpoint will handle the soft deletion of a message and its entire branch of descendants.
 
-#### New Chat & Branching Flow
-```mermaid
-sequenceDiagram
-    actor User
-    participant ChatPaneVue as [ChatPane.vue Client]
-    participant ChatPostAPI as [POST /api/chat]
-    participant PrismaDB as [Prisma / Database]
-    participant AISDK as [AI SDK / Google AI]
+**Request Body:** `{ messageId: string }`
 
-    %% New Chat Flow
-    User->>ChatPaneVue: Sends first message
-    activate ChatPaneVue
-    ChatPaneVue->>ChatPaneVue: Generates provisional title
-    ChatPaneVue->>ChatPostAPI: POST /api/chat {sessionId: null, parentId: null, message, ...}
-    deactivate ChatPaneVue
-    activate ChatPostAPI
+**Logic:**
+1.  Receive the `messageId` to be deleted.
+2.  Create a recursive function that finds all children, grandchildren, etc., of that message.
+3.  Update all found message records, setting `isDeleted` to `true`.
 
-    ChatPostAPI->>PrismaDB: Create new ChatSession record
-    activate PrismaDB
-    PrismaDB-->>ChatPostAPI: Returns new sessionId
-    deactivate PrismaDB
+### `GET /api/chat/[id]` Endpoint Update
+This endpoint must now filter out deleted messages before building the tree.
 
-    ChatPostAPI->>AISDK: streamText(...)
-    activate AISDK
-    AISDK-->>ChatPostAPI: Streams response
-    deactivate AISDK
-    
-    Note right of ChatPostAPI: Server sends new sessionId back to client
-    ChatPostAPI-->>ChatPaneVue: Streams UI response (incl. new sessionId)
-    activate ChatPaneVue
-    ChatPaneVue->>ChatPaneVue: Stores the new sessionId
-    deactivate ChatPaneVue
-
-    Note over ChatPostAPI: onFinish: save messages, update activeMessageId
-    deactivate ChatPostAPI
-    
-    %% Existing Chat / Branching Flow
-    User->>ChatPaneVue: Edits a message
-    activate ChatPaneVue
-    ChatPaneVue->>ChatPostAPI: POST /api/chat {sessionId, parentId, ...}
-    deactivate ChatPaneVue
-    activate ChatPostAPI
-    ChatPostAPI->>PrismaDB: Reconstruct history from parentId
-    activate PrismaDB
-    PrismaDB-->>ChatPostAPI: Returns linear history
-    deactivate PrismaDB
-    ChatPostAPI->>AISDK: streamText(...)
-    activate AISDK
-    AISDK-->>ChatPostAPI: Streams response
-    deactivate AISDK
-    ChatPostAPI-->>ChatPaneVue: Streams UI response
-    activate ChatPaneVue
-    Note over ChatPostAPI: onFinish: save messages, update activeMessageId, trigger title gen
-    deactivate ChatPostAPI
-    deactivate ChatPaneVue
+```typescript
+// In server/api/chat/[id].get.ts
+// ...
+const messages = await prisma.chatMessage.findMany({ 
+  where: { 
+    sessionId: chatId,
+    isDeleted: false // Filter out deleted messages
+  }, 
+  orderBy: { createdAt: 'asc' } 
+});
+// ...
 ```
-
-#### Loading & Navigation Flow
-```mermaid
-sequenceDiagram
-    actor User
-    participant ChatPaneVue as [ChatPane.vue Client]
-    participant ChatGetAPI as [GET /api/chat/[id]]
-    participant PrismaDB as [Prisma / Database]
-
-    %% Load Chat History Flow
-    User->>ChatPaneVue: Clicks 'Open Chat' for Session ID 'XYZ'
-    activate ChatPaneVue
-    ChatPaneVue->>ChatGetAPI: GET /api/chat/XYZ
-    activate ChatGetAPI
-    ChatGetAPI->>PrismaDB: Find session and all related messages
-    activate PrismaDB
-    PrismaDB-->>ChatGetAPI: Return session and flat message list
-    deactivate PrismaDB
-    ChatGetAPI->>ChatGetAPI: buildTree utility processes messages
-    ChatGetAPI-->>ChatPaneVue: Return { tree, activeMessageId }
-    deactivate ChatGetAPI
-    ChatPaneVue->>ChatPaneVue: Stores tree and determines active branch from activeMessageId
-    ChatPaneVue-->>User: Displays the loaded chat session
-    deactivate ChatPaneVue
-
-    %% Change Branch Flow (Client-Side Only)
-    User->>ChatPaneVue: Clicks branch navigation '<' or '>' on a message
-    activate ChatPaneVue
-    ChatPaneVue->>ChatPaneVue: Updates its internal 'activeChildren' map
-    Note right of ChatPaneVue: The 'visibleMessages' computed property reactively updates
-    ChatPaneVue-->>User: Displays the newly selected branch
-    deactivate ChatPaneVue
-```
-
-### API Endpoint Details
-- **`POST /api/chat`**: Handles creating/continuing conversations.
-- **`GET /api/chats`**: Fetches the list of all `ChatSession` records for the user.
-- **`GET /api/chat/[id]`**: Fetches a single `ChatSession` and its full message tree.
 
 ---
 
 ## 3. Step 3: Frontend Implementation
 
-- **`ChatPane.vue`**: Will be refactored to manage the full message tree state, handle the history dialog, and manage the provisional title logic.
-- **`HistoryDialog.vue`**: A new component to display the list of chat sessions.
-- **`Message.vue`**: Will be updated to display the `< 1/3 >` branch navigation controls.
+### `ChatPane.vue` Update
+The `handleDelete` function will be changed to call our new API endpoint.
 
-This fully detailed plan now covers the complete data flow, error conditions, and utility function signatures, making it a clear guide for implementation.
+```vue
+// In components/ChatPane.vue
+
+const handleDelete = async (messageId: string) => {
+  await fetch('/api/message', {
+    method: 'DELETE',
+    body: JSON.stringify({ messageId }),
+  });
+  
+  // After successful deletion, reload the chat to show the updated state
+  // This will call the GET /api/chat/[id] endpoint again
+  loadChat(currentSessionId.value); 
+};
+```
+
+This ensures that deletions are handled persistently and correctly within our branching data model.
