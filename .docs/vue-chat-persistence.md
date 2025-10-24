@@ -1,24 +1,22 @@
-# Plan: Implementing Persistent, Branching Conversations with a History Dialog
+# Plan: Implementing Persistent Chat Conversations with a History Dialog
 
-This document outlines the plan to upgrade the existing chat application to support a persistent, tree-based conversation model with a `shadcn-vue` dialog for browsing chat history and in-line controls for navigating between conversation branches.
+This document outlines the plan to upgrade the existing chat application to support a persistent, linear conversation model with a `shadcn-vue` dialog for browsing chat history.
 
 ### Goal
 
 To create a system where:
-1.  Chat conversations, including AI tool usage, are saved to a database with branching support.
+1.  Chat conversations, including AI tool usage, are saved to a database.
 2.  The initial URL of a chat is recorded.
-3.  The last active branch of a conversation is remembered and restored automatically.
-4.  A user can browse their chat history in a dialog.
-5.  New chats receive a provisional, timestamp-based title that is later updated by a lightweight AI model.
-6.  From the dialog, a user can load a past chat or navigate to its original page.
-7.  Users can navigate between different conversation branches using a pagination-style control (`< 1/3 >`).
-8.  Users can delete a message and all of its subsequent messages in a branch.
+3.  A user can browse their chat history in a dialog.
+4.  New chats receive a provisional, timestamp-based title that is later updated by a lightweight AI model.
+5.  From the dialog, a user can load a past chat or navigate to its original page.
+6.  Users can delete a message and all of its subsequent messages.
 
 ---
 
 ## 1. Step 1: Database Schema
 
-The Prisma schema will be updated to include a soft-delete flag on messages.
+The Prisma schema will be updated to support a simple, linear conversation history.
 
 ```prisma
 // In your prisma/schema.prisma
@@ -37,22 +35,15 @@ model ChatSession {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   sourceUrl String?
-  activeMessageId String?
 }
 
 model ChatMessage {
   id         String    @id @default(cuid())
   sessionId  String
   session    ChatSession @relation(fields: [sessionId], references: [id])
-  parentId   String?
-  parent     ChatMessage?  @relation("MessageChildren", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children   ChatMessage[] @relation("MessageChildren")
   role       String    // 'user' or 'assistant'
   content    Json
   createdAt  DateTime  @default(now())
-
-  // New field for soft deletion
-  isDeleted  Boolean   @default(false)
 }
 ```
 
@@ -60,18 +51,18 @@ model ChatMessage {
 
 ## 2. Step 2: Backend API Endpoints & Logic
 
-### New `DELETE /api/message` Endpoint
-This endpoint will handle the soft deletion of a message and its entire branch of descendants.
+### New `DELETE /api/messages` Endpoint
+This endpoint will handle the deletion of a message and all subsequent messages in the session.
 
-**Request Body:** `{ messageId: string }`
+**Request Body:** `{ messageId: string, sessionId: string }`
 
 **Logic:**
-1.  Receive the `messageId` to be deleted.
-2.  Create a recursive function that finds all children, grandchildren, etc., of that message.
-3.  Update all found message records, setting `isDeleted` to `true`.
+1.  Receive the `messageId` and `sessionId`.
+2.  Find the message to be deleted.
+3.  Delete all messages in the same session that were created at or after the specified message.
 
 ### `GET /api/chat/[id]` Endpoint Update
-This endpoint must now filter out deleted messages before building the tree.
+This endpoint will fetch the messages for a given chat session in chronological order.
 
 ```typescript
 // In server/api/chat/[id].get.ts
@@ -79,7 +70,6 @@ This endpoint must now filter out deleted messages before building the tree.
 const messages = await prisma.chatMessage.findMany({ 
   where: { 
     sessionId: chatId,
-    isDeleted: false // Filter out deleted messages
   }, 
   orderBy: { createdAt: 'asc' } 
 });
@@ -97,15 +87,11 @@ The `handleDelete` function will be changed to call our new API endpoint.
 // In components/ChatPane.vue
 
 const handleDelete = async (messageId: string) => {
-  await fetch('/api/message', {
+  await fetch('/api/messages', {
     method: 'DELETE',
-    body: JSON.stringify({ messageId }),
+    body: JSON.stringify({ messageId, sessionId: currentSessionId.value }),
   });
   
   // After successful deletion, reload the chat to show the updated state
-  // This will call the GET /api/chat/[id] endpoint again
   loadChat(currentSessionId.value); 
 };
-```
-
-This ensures that deletions are handled persistently and correctly within our branching data model.
