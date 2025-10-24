@@ -8,55 +8,15 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import type { UIMessage } from "ai";
+import type { ChatSession } from "@prisma/client";
+import { formatRelativeTime } from "~/utils/format-relative-time";
 
 const { $emitter } = useNuxtApp();
 
-const sampleConversations: { title: string; messages: UIMessage[] }[] = [
-  {
-    title: "Vue.js History",
-    messages: [
-      {
-        id: "hist-1",
-        role: "user",
-        parts: [{ type: "text", text: "Tell me about Vue.js history." }],
-      },
-      {
-        id: "hist-2",
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: "Vue.js was created by Evan You and first released in 2014.",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Nuxt 3 Features",
-    messages: [
-      {
-        id: "nuxt-1",
-        role: "user",
-        parts: [{ type: "text", text: "What are the key features of Nuxt 3?" }],
-      },
-      {
-        id: "nuxt-2",
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: "Nuxt 3 features a new server engine (Nitro), Vue 3 support, and TypeScript integration.",
-          },
-        ],
-      },
-    ],
-  },
-];
+const { data: conversations, pending, refresh } = await useFetch<ChatSession[]>("/api/chats");
 
-function selectConversation(messages: UIMessage[]) {
-  $emitter.emit("loadChat", messages);
+function selectConversation(sessionId: string) {
+  $emitter.emit("loadChat", sessionId);
 }
 </script>
 
@@ -64,6 +24,7 @@ function selectConversation(messages: UIMessage[]) {
   <Dialog>
     <DialogTrigger as-child>
       <button
+        @click="() => refresh()"
         class="flex items-center justify-center p-2 rounded-full hover:bg-gray-200/50 transition cursor-pointer"
       >
         <Icon name="lucide:history" class="w-6 h-6" />
@@ -73,20 +34,22 @@ function selectConversation(messages: UIMessage[]) {
       <DialogHeader>
         <DialogTitle>Chat History</DialogTitle>
         <DialogDescription>
-          Select a sample conversation to load into the chat.
+          Select a conversation to load into the chat.
         </DialogDescription>
       </DialogHeader>
       <div class="flex flex-col gap-2">
+        <div v-if="pending">Loading...</div>
         <DialogClose
           as-child
-          v-for="(convo, index) in sampleConversations"
-          :key="index"
+          v-for="convo in conversations"
+          :key="convo.id"
         >
           <button
-            @click="selectConversation(convo.messages)"
+            @click="selectConversation(convo.id)"
             class="p-2 text-left rounded-md hover:bg-gray-100"
           >
             <p class="font-semibold">{{ convo.title }}</p>
+            <p class="text-xs text-gray-500">{{ formatRelativeTime(convo.createdAt as any) }}</p>
           </button>
         </DialogClose>
       </div>

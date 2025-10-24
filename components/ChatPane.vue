@@ -6,29 +6,25 @@ import ModelSelector from "./Chat/ModelSelector.vue";
 import ModeSelector from "./Chat/ModeSelector.vue";
 import MessageList from "./Chat/MessageList.vue";
 import HistoryDialog from "./Chat/HistoryDialog.vue";
+import Welcome from "./Chat/Welcome.vue";
 import { toast } from "vue-sonner";
 
 const { $emitter } = useNuxtApp();
+const route = useRoute();
 const input = ref("");
 const selectedModel = ref("free");
 const selectedMode = ref("default");
 const messageContainer = ref<HTMLElement | null>(null);
 const textarea = ref<HTMLTextAreaElement | null>(null);
 
-const initialMessages: UIMessage[] = [
-  {
-    id: "1",
-    role: "user",
-    parts: [{ type: "text", text: "This is an initial user message." }],
-  },
-  {
-    id: "2",
-    role: "assistant",
-    parts: [
-      { type: "text", text: "This is an initial assistant response." },
-    ],
-  },
-];
+const sessionId = ref<string | null>(null);
+const sourceUrl = ref<string | null>(null);
+const chatTitle = ref<string>('Chat');
+
+const showOpenInOriginalPage = computed(() => {
+  if (!sourceUrl.value) return false;
+  return sourceUrl.value !== route.path;
+});
 
 const chat = new Chat({
   transport: new DefaultChatTransport({
@@ -36,14 +32,29 @@ const chat = new Chat({
     body: () => ({
       model: selectedModel.value,
       mode: selectedMode.value,
+      sessionId: sessionId.value,
+      sourceUrl: route.path,
     }),
   }),
-  messages: initialMessages,
 });
 
-function handleLoadChat(messages: UIMessage[]) {
-  chat.messages.splice(0, chat.messages.length);
-  chat.messages.push(...messages);
+async function handleLoadChat(newSessionId: string) {
+  const { data: session, error } = await useFetch<any>(`/api/chat/${newSessionId}`);
+  if (error.value) {
+    toast.error("Failed to load chat session.");
+    return;
+  }
+  if (session.value) {
+    chat.messages.splice(0, chat.messages.length);
+    chat.messages.push(...session.value.messages.map((m: any) => ({
+      id: m.id,
+      role: m.role,
+      parts: m.content,
+    })));
+    sessionId.value = newSessionId;
+    sourceUrl.value = session.value.sourceUrl;
+    chatTitle.value = session.value.title;
+  }
 }
 
 const handleSubmit = (e: Event) => {
@@ -78,9 +89,13 @@ const handleRetry = (id: string) => {
   chat.regenerate({ messageId: id });
 };
 
-const handleDelete = (id: string) => {
+const handleDelete = async (id: string) => {
   const messageIndex = chat.messages.findIndex((m) => m.id === id);
   if (messageIndex === -1) return;
+
+  await $fetch(`/api/chat/message/${id}`, {
+    method: 'PATCH' as any,
+  });
 
   chat.messages.splice(messageIndex);
 };
@@ -105,7 +120,14 @@ onUnmounted(() => {
 
 watch(
   () => chat.messages,
-  () => {
+  (messages) => {
+    for (const message of messages) {
+      for (const part of message.parts) {
+        if (part.type === 'data-custom' && (part.data as any).sessionId) {
+          sessionId.value = (part.data as any).sessionId;
+        }
+      }
+    }
     // console.log("Messages updated:", JSON.stringify(chat.messages, null, 2));
     nextTick(() => {
       if (messageContainer.value) {
@@ -130,7 +152,10 @@ watch(input, () => {
       class="flex items-center justify-between p-4 border-b shrink-0 h-16"
     >
       <div class="flex items-center gap-4">
-        <h1 class="text-lg font-semibold" >Chat</h1>
+        <h1 class="text-lg font-semibold" >{{ chatTitle }}</h1>
+        <NuxtLink v-if="showOpenInOriginalPage" :to="sourceUrl ?? ''" class="text-sm p-2 hover:bg-gray-200 rounded">
+          <Icon name="lucide:external-link" class="w-4 h-4" />
+        </NuxtLink>
       </div>
       <HistoryDialog />
     </header>
@@ -139,6 +164,7 @@ watch(input, () => {
       :messages="chat.messages"
       :status="chat.status"
     />
+    <Welcome v-if="chat.messages.length === 0" />
     <form
       @submit.prevent="handleSubmit"
       id="messageInput"
