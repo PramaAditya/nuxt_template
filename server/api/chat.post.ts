@@ -83,8 +83,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const modelName = requestedModel === 'premium'
-    ? config.public.ai.premiumModel
-    : config.public.ai.freeModel;
+    ? (config.public.ai as any).premiumModel
+    : (config.public.ai as any).freeModel;
 
   const chatMode = getChatMode(mode);
 
@@ -172,6 +172,10 @@ export default defineEventHandler(async (event) => {
               await prisma.chatSession.update({
                 where: { id: sessionId! },
                 data: { title: newTitle },
+              });
+              writer.write({
+                type: 'data-custom',
+                data: { updatedTitle: newTitle },
               });
             }
           } else {

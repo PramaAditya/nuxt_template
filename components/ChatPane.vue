@@ -20,6 +20,8 @@ const textarea = ref<HTMLTextAreaElement | null>(null);
 const sessionId = ref<string | null>(null);
 const sourceUrl = ref<string | null>(null);
 const chatTitle = ref<string>('Chat');
+const isEditingTitle = ref(false);
+const titleInput = ref<HTMLInputElement | null>(null);
 
 const showOpenInOriginalPage = computed(() => {
   if (!sourceUrl.value) return false;
@@ -55,6 +57,29 @@ async function handleLoadChat(newSessionId: string) {
     sourceUrl.value = session.value.sourceUrl;
     chatTitle.value = session.value.title;
   }
+}
+
+async function saveTitle() {
+  if (!sessionId.value) return;
+  await $fetch(`/api/chat/${sessionId.value}`, {
+    method: 'PATCH',
+    body: { title: chatTitle.value },
+  });
+  isEditingTitle.value = false;
+}
+
+function startEditingTitle() {
+  isEditingTitle.value = true;
+  nextTick(() => {
+    titleInput.value?.focus();
+  });
+}
+
+function newChat() {
+  chat.messages.splice(0, chat.messages.length);
+  sessionId.value = null;
+  sourceUrl.value = null;
+  chatTitle.value = 'Chat';
 }
 
 const handleSubmit = (e: Event) => {
@@ -107,6 +132,7 @@ onMounted(() => {
   $emitter.on("message:retry", handleRetry);
   $emitter.on("message:delete", handleDelete);
   $emitter.on("loadChat", handleLoadChat);
+  $emitter.on('current-chat-deleted', newChat);
 });
 
 onUnmounted(() => {
@@ -116,6 +142,7 @@ onUnmounted(() => {
   $emitter.off("message:retry", handleRetry);
   $emitter.off("message:delete", handleDelete);
   $emitter.off("loadChat", handleLoadChat);
+  $emitter.off('current-chat-deleted', newChat);
 });
 
 watch(
@@ -126,14 +153,12 @@ watch(
         if (part.type === 'data-custom' && (part.data as any).sessionId) {
           sessionId.value = (part.data as any).sessionId;
         }
+        if (part.type === 'data-custom' && (part.data as any).updatedTitle) {
+          chatTitle.value = (part.data as any).updatedTitle;
+        }
       }
     }
     // console.log("Messages updated:", JSON.stringify(chat.messages, null, 2));
-    nextTick(() => {
-      if (messageContainer.value) {
-        messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
-      }
-    });
   },
   { deep: true }
 );
@@ -151,13 +176,29 @@ watch(input, () => {
     <header
       class="flex items-center justify-between p-4 border-b shrink-0 h-16"
     >
-      <div class="flex items-center gap-4">
-        <h1 class="text-lg font-semibold" >{{ chatTitle }}</h1>
+      <div class="flex items-center gap-4 group">
+        <h1 v-if="!isEditingTitle" class="text-lg font-semibold" >{{ chatTitle }}</h1>
+        <input
+          v-else
+          ref="titleInput"
+          v-model="chatTitle"
+          @blur="saveTitle"
+          @keydown.enter="saveTitle"
+          class="text-lg font-semibold bg-transparent border-b border-gray-400"
+        />
+        <button @click="startEditingTitle" class="text-sm p-2 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+          <Icon name="lucide:pencil" class="w-4 h-4" />
+        </button>
         <NuxtLink v-if="showOpenInOriginalPage" :to="sourceUrl ?? ''" class="text-sm p-2 hover:bg-gray-200 rounded">
           <Icon name="lucide:external-link" class="w-4 h-4" />
         </NuxtLink>
       </div>
-      <HistoryDialog />
+      <div class="flex items-center gap-2">
+        <button @click="newChat" class="text-sm p-2 hover:bg-gray-200 rounded">
+          <Icon name="lucide:plus" class="w-4 h-4" />
+        </button>
+        <HistoryDialog :session-id="sessionId" />
+      </div>
     </header>
     <MessageList
       ref="messageContainer"

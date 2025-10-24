@@ -1,10 +1,19 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from "vue";
 import type { ChatSession } from "@prisma/client";
 import { formatRelativeTime } from "~/utils/format-relative-time";
 
 const { $emitter } = useNuxtApp();
 
-const { data: conversations, pending } = await useFetch<ChatSession[]>("/api/chats?limit=3");
+const { data: conversations, pending, refresh } = await useFetch<ChatSession[]>("/api/chats?limit=3");
+
+onMounted(() => {
+  $emitter.on('refresh-welcome', refresh);
+});
+
+onUnmounted(() => {
+  $emitter.off('refresh-welcome', refresh);
+});
 
 function selectConversation(sessionId: string) {
   $emitter.emit("loadChat", sessionId);
