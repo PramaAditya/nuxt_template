@@ -25,7 +25,7 @@ const pageFeatures = usePageFeatures({ chat: false })
             <header class="flex items-center justify-between p-4 border-b shrink-0 h-16">
               <div class="flex items-center gap-4">
                 <SidebarTrigger />
-                <h1 id="page-name-target" class="text-lg font-semibold" />
+                <!-- <h1 id="page-name-target" class="text-lg font-semibold" /> -->
               </div>
               <div class="flex items-center gap-4">
                 <Button v-if="pageFeatures.chat" @click="openChatPane">

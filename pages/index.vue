@@ -8,7 +8,7 @@ usePageFeatures({
 });
 </script>
 <template>
-    <Teleport to="#page-name-target">
+    <!-- <Teleport to="#page-name-target">
       Dashboard
     </Teleport>
     <Teleport to="#toolbar-target">
@@ -16,6 +16,6 @@ usePageFeatures({
           <Icon name="lucide:plus" class="w-4 h-4 mr-2" />
           New
       </Button>
-    </Teleport>
+    </Teleport> -->
   {{user}}
 </template>

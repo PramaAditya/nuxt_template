@@ -7,7 +7,7 @@ usePageFeatures({
 </script>
 
 <template>
-  <Teleport to="#page-name-target"> Chat Page 2</Teleport>
+  <!-- <Teleport to="#page-name-target"> Chat Page 2</Teleport> -->
   <div>
     <p>This page has the chat feature enabled.</p>
   </div>
