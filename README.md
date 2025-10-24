@@ -1,15 +1,15 @@
-# Nuxt 3 AI SaaS Template
+# Nuxt 4 AI SaaS Template
 
 [![Use this template](https://img.shields.io/badge/--000000?style=for-the-badge&logo=github&label=Use%20this%20template)](https://github.com/PramaAditya/nuxt_template/generate)
 
-This is my personal, comprehensive template for building AI-powered Software-as-a-Service (SaaS) applications using a modern, robust, and scalable tech stack. It provides a solid foundation with pre-configured authentication, database integration, UI components, and AI model connectivity.
+This is a comprehensive template for building AI-powered Software-as-a-Service (SaaS) applications using a modern, robust, and scalable tech stack. It provides a solid foundation with pre-configured authentication, database integration, UI components, and AI model connectivity.
 
 ## ✨ Features
 
 *   **User Authentication:** Secure login, logout, and session management powered by Logto.
-*   **AI Chat Interface:** A ready-to-use chat interface using the Vercel AI SDK and Google Gemini Pro.
+*   **AI Chat Interface:** A ready-to-use chat interface using the Vercel AI v5 SDK and Google Gemini Pro.
 *   **Database Integration:** Type-safe database access with Prisma ORM connected to a PostgreSQL database.
-*   **Server-Side Logic:** Nuxt 3 server routes for creating API endpoints.
+*   **Server-Side Logic:** Nuxt 4 server routes for creating API endpoints.
 *   **Reusable Components:** A clean and consistent UI built with Shadcn-Vue.
 *   **Scalable Deployment:** Easily deployable on Netlify's free tier.
 
@@ -17,7 +17,7 @@ This is my personal, comprehensive template for building AI-powered Software-as-
 
 This template is built with the following technologies:
 
-*   **Framework:** **[Nuxt 3](https://nuxt.com/docs)**
+*   **Framework:** **[Nuxt 4](https://nuxt.com/docs)**
     *   A powerful Vue.js framework for building server-side rendered (SSR) and static websites. We leverage its *server routes*, *composables*, and rich ecosystem.
 
 *   **Database:** **[PostgreSQL](https://www.postgresql.org/)**
@@ -34,7 +34,7 @@ This template is built with the following technologies:
 
 *   **LLM & AI SDK:**
     *   **Model:** **Google Gemini 2.5 Pro and Flash** (Get your free API Key from [Google AI Studio](https://aistudio.google.com/)).
-    *   **Library:** **[Vercel AI SDK](https://sdk.vercel.ai/docs)**. The `useChat` hook simplifies the integration with the LLM and manages response streaming on the client side.
+    *   **Library:** **[Vercel AI v5 SDK](https://sdk.vercel.ai/docs)**. The `useChat` hook simplifies the integration with the LLM and manages response streaming on the client side.
 
 *   **Deployment:** **[Netlify](https://docs.netlify.com/)**
     *   Deploy your application to the public using Netlify's powerful and easy-to-use free tier.
