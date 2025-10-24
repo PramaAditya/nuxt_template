@@ -5,6 +5,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import ModelSelector from "./Chat/ModelSelector.vue";
 import ModeSelector from "./Chat/ModeSelector.vue";
 import MessageList from "./Chat/MessageList.vue";
+import HistoryDialog from "./Chat/HistoryDialog.vue";
 import { toast } from "vue-sonner";
 
 const { $emitter } = useNuxtApp();
@@ -14,6 +15,21 @@ const selectedMode = ref("default");
 const messageContainer = ref<HTMLElement | null>(null);
 const textarea = ref<HTMLTextAreaElement | null>(null);
 
+const initialMessages: UIMessage[] = [
+  {
+    id: "1",
+    role: "user",
+    parts: [{ type: "text", text: "This is an initial user message." }],
+  },
+  {
+    id: "2",
+    role: "assistant",
+    parts: [
+      { type: "text", text: "This is an initial assistant response." },
+    ],
+  },
+];
+
 const chat = new Chat({
   transport: new DefaultChatTransport({
     api: "/api/chat",
@@ -22,7 +38,13 @@ const chat = new Chat({
       mode: selectedMode.value,
     }),
   }),
+  messages: initialMessages,
 });
+
+function handleLoadChat(messages: UIMessage[]) {
+  chat.messages.splice(0, chat.messages.length);
+  chat.messages.push(...messages);
+}
 
 const handleSubmit = (e: Event) => {
   e.preventDefault();
@@ -69,6 +91,7 @@ onMounted(() => {
   $emitter.on("message:submit-edit", handleEdit);
   $emitter.on("message:retry", handleRetry);
   $emitter.on("message:delete", handleDelete);
+  $emitter.on("loadChat", handleLoadChat);
 });
 
 onUnmounted(() => {
@@ -77,6 +100,7 @@ onUnmounted(() => {
   $emitter.off("message:submit-edit", handleEdit);
   $emitter.off("message:retry", handleRetry);
   $emitter.off("message:delete", handleDelete);
+  $emitter.off("loadChat", handleLoadChat);
 });
 
 watch(
@@ -108,7 +132,7 @@ watch(input, () => {
       <div class="flex items-center gap-4">
         <h1 class="text-lg font-semibold" >Chat</h1>
       </div>
-      
+      <HistoryDialog />
     </header>
     <MessageList
       ref="messageContainer"
